@@ -5,15 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Mail, Loader2 } from "lucide-react";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -33,56 +32,28 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signInWithOtp({
         email,
-        password,
         options: {
-          data: { full_name: fullName },
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/admin`,
         },
       });
 
       if (error) throw error;
 
+      setEmailSent(true);
       toast({
-        title: "Konto erstellt!",
-        description: "Sie können sich jetzt mit Ihren Zugangsdaten anmelden.",
+        title: "Email gesendet!",
+        description: "Überprüfen Sie Ihre E-Mails für den Login-Link.",
       });
     } catch (error: any) {
       toast({
         title: "Fehler",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Willkommen zurück!",
-        description: "Erfolgreich angemeldet.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
         description: error.message,
         variant: "destructive",
       });
@@ -96,77 +67,55 @@ export default function Auth() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">OMEGA System</CardTitle>
-          <CardDescription>Authentifizierungs-Portal</CardDescription>
+          <CardDescription>Administrator-Zugang</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Anmelden</TabsTrigger>
-              <TabsTrigger value="signup">Registrieren</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Wird angemeldet..." : "Anmelden"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div>
-                  <Input
-                    type="text"
-                    placeholder="Vollständiger Name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <Input
-                    type="password"
-                    placeholder="Passwort (min. 6 Zeichen)"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Konto wird erstellt..." : "Registrieren"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+          {emailSent ? (
+            <div className="text-center space-y-4">
+              <Mail className="h-16 w-16 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Prüfen Sie Ihre E-Mails</h3>
+              <p className="text-muted-foreground">
+                Wir haben einen Login-Link an <strong>{email}</strong> gesendet.
+                Klicken Sie auf den Link, um sich anzumelden.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => setEmailSent(false)}
+                className="mt-4"
+              >
+                Andere E-Mail verwenden
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleMagicLink} className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Ihre E-Mail-Adresse"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Wird gesendet...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Magic Link senden
+                  </>
+                )}
+              </Button>
+              <p className="text-sm text-muted-foreground text-center mt-4">
+                Kein Passwort erforderlich. Sie erhalten einen sicheren Login-Link per E-Mail.
+              </p>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>
