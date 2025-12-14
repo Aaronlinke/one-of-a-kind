@@ -8,6 +8,7 @@ import LayerDetail from "./pages/LayerDetail";
 import SystemOverview from "./pages/SystemOverview";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import BitcoinPuzzle from "./pages/BitcoinPuzzle";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/overview" element={<SystemOverview />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/bitcoin-puzzle" element={<BitcoinPuzzle />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
