@@ -69,13 +69,19 @@ export default function BrainWalletHunter() {
 
   const checkBrainWallet = useCallback(async (passphrase: string) => {
     try {
-      const privKeyHex = await brainWalletHash(passphrase);
-      const address = await deriveAddressFromPrivKey(privKeyHex);
+      const privKeyHex = brainWalletHash(passphrase);
+      const address = deriveAddressFromPrivKey(privKeyHex);
+      
+      if (!address) {
+        console.error('Could not derive address');
+        return false;
+      }
+      
       const stats = await getAddressStats(address);
       
       if (stats.unspent > 0 || stats.txcount > 0) {
         const privInt = BigInt('0x' + privKeyHex);
-        const wif = await intToWif(privInt);
+        const wif = intToWif(privInt);
         
         const wallet: FoundWallet = {
           passphrase,
@@ -148,11 +154,14 @@ export default function BrainWalletHunter() {
         for (let i = 0n; i < KEYS_PER_PAGE && huntingRef.current; i++) {
           const privInt = startInt + i;
           const hex = intToHex(privInt);
-          const address = await deriveAddressFromPrivKey(hex);
+          const address = deriveAddressFromPrivKey(hex);
+          
+          if (!address) continue;
+          
           const addrStats = await getAddressStats(address);
           
           if (addrStats.unspent > 0) {
-            const wif = await intToWif(privInt);
+            const wif = intToWif(privInt);
             const wallet: FoundWallet = {
               privateKey: hex,
               address,
