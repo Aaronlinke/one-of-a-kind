@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,17 +9,29 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Atom, Brain, Zap, Shield, Network, Activity, 
   ArrowLeft, Play, Pause, RotateCcw, Database,
-  Lock, Cpu, Waves, Eye, Sparkles, Binary
+  Lock, Cpu, Waves, Eye, Sparkles, Binary, Loader2
 } from "lucide-react";
+
+// API Helper
+const callOmniCompute = async (action: string, params?: Record<string, unknown>) => {
+  const { data, error } = await supabase.functions.invoke('omni-compute', {
+    body: { action, params }
+  });
+  if (error) throw error;
+  return data;
+};
 
 // Quantum Vacuum Simulator
 const QuantumVacuumModule = () => {
   const [particles, setParticles] = useState<Array<{id: string, energy: number, type: string, phase: number}>>([]);
   const [zeroPointEnergy, setZeroPointEnergy] = useState(1.0);
   const [isRunning, setIsRunning] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [metrics, setMetrics] = useState<{quantumCoherence: number, hawkingRadiation: number} | null>(null);
 
   const initializeVacuum = () => {
     const newParticles = Array.from({length: 50}, (_, i) => ({
@@ -29,6 +42,22 @@ const QuantumVacuumModule = () => {
     }));
     setParticles(newParticles);
     setIsRunning(true);
+  };
+
+  const runBackendSimulation = async () => {
+    setLoading(true);
+    try {
+      const result = await callOmniCompute('quantum_simulate', { zeroPointEnergy, particleCount: 100 });
+      if (result.success) {
+        setParticles(result.data.particles);
+        setMetrics(result.data.metrics);
+        setIsRunning(true);
+      }
+    } catch (err) {
+      console.error('Quantum simulation error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const modulateFluctuations = () => {
@@ -46,12 +75,13 @@ const QuantumVacuumModule = () => {
           <Atom className="h-5 w-5 text-purple-400" />
           Quantum Vacuum Symmetry Breaker
         </CardTitle>
-        <CardDescription>Vakuumfluktuationen & virtuelle Teilchen</CardDescription>
+        <CardDescription>Backend-gestützte Vakuumfluktuationen</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-2">
-          <Button onClick={initializeVacuum} size="sm" className="bg-purple-600 hover:bg-purple-700">
-            <Play className="h-4 w-4 mr-1" /> Initialize
+          <Button onClick={runBackendSimulation} size="sm" className="bg-purple-600 hover:bg-purple-700" disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Play className="h-4 w-4 mr-1" />}
+            API Simulate
           </Button>
           <Button onClick={modulateFluctuations} size="sm" variant="outline" disabled={!isRunning}>
             <Waves className="h-4 w-4 mr-1" /> Modulate
@@ -87,6 +117,13 @@ const QuantumVacuumModule = () => {
             <span className="text-pink-400">Antiparticles:</span> {particles.filter(p => p.type === 'antiparticle').length}
           </div>
         </div>
+
+        {metrics && (
+          <div className="bg-purple-900/20 p-2 rounded text-xs space-y-1">
+            <p><span className="text-purple-400">Quantum Coherence:</span> {(metrics.quantumCoherence * 100).toFixed(1)}%</p>
+            <p><span className="text-purple-400">Hawking Radiation:</span> {metrics.hawkingRadiation.toFixed(4)}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -185,6 +222,9 @@ const SwarmIntelligenceModule = () => {
   const [agents, setAgents] = useState<Array<{id: number, x: number, y: number, energy: number, knowledge: number}>>([]);
   const [globalKnowledge, setGlobalKnowledge] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [evolutionSteps, setEvolutionSteps] = useState(0);
+  const { toast } = useToast();
 
   const initializeSwarm = () => {
     const newAgents = Array.from({length: 20}, (_, i) => ({
@@ -196,6 +236,26 @@ const SwarmIntelligenceModule = () => {
     }));
     setAgents(newAgents);
     setIsRunning(true);
+    setEvolutionSteps(0);
+  };
+
+  const runBackendEvolution = async () => {
+    setLoading(true);
+    try {
+      const result = await callOmniCompute('swarm_evolve', { agentCount: 20, steps: 10 });
+      if (result.success) {
+        setAgents(result.data.agents);
+        setGlobalKnowledge(result.data.finalKnowledge);
+        setEvolutionSteps(prev => prev + 10);
+        setIsRunning(true);
+        toast({ title: "Schwarm Evolution", description: `Knowledge: ${(result.data.finalKnowledge * 100).toFixed(1)}%` });
+      }
+    } catch (err) {
+      console.error('Swarm evolution error:', err);
+      toast({ title: "Fehler", description: "Backend nicht erreichbar", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const evolveSwarm = () => {
@@ -235,12 +295,14 @@ const SwarmIntelligenceModule = () => {
       <CardContent className="space-y-4">
         <div className="flex gap-2">
           <Button onClick={initializeSwarm} size="sm" className="bg-cyan-600 hover:bg-cyan-700">
-            <Zap className="h-4 w-4 mr-1" /> Init Swarm
+            <Zap className="h-4 w-4 mr-1" /> Init
           </Button>
-          <Button onClick={evolveSwarm} size="sm" variant="outline" disabled={!isRunning}>
-            <Activity className="h-4 w-4 mr-1" /> Evolve
+          <Button onClick={runBackendEvolution} size="sm" variant="outline" disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Activity className="h-4 w-4 mr-1" />}
+            API Evolve
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">Steps: {evolutionSteps}</p>
 
         <div className="relative h-40 bg-black/50 rounded overflow-hidden">
           {agents.map(agent => (

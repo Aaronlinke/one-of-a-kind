@@ -1,1 +1,16 @@
 project_id = "jssfcktvyczsxivhmpfm"
+
+[functions.omni-compute]
+verify_jwt = false
+
+[functions.autonomous-executor]
+verify_jwt = false
+
+[functions.autonomy-agent]
+verify_jwt = false
+
+[functions.hybrid-ai-chat]
+verify_jwt = false
+
+[functions.web-automation]
+verify_jwt = false
