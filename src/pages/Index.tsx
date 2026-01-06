@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Activity, Database, Bitcoin } from "lucide-react";
+import { Activity, Database, Bitcoin, Atom } from "lucide-react";
 
 interface Layer {
   id: string;
@@ -227,6 +227,10 @@ export default function Index() {
             <Button size="lg" onClick={() => navigate("/bitcoin-puzzle")} className="bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black">
               <Bitcoin className="mr-2 h-5 w-5" />
               Bitcoin Puzzle
+            </Button>
+            <Button size="lg" onClick={() => navigate("/omni-genesis")} className="bg-gradient-to-r from-purple-500 via-cyan-500 to-yellow-500 hover:from-purple-600 hover:via-cyan-600 hover:to-yellow-600 text-white">
+              <Atom className="mr-2 h-5 w-5" />
+              OmniGenesis
             </Button>
             <Button size="lg" variant="outline" className="border-primary/20 hover:bg-primary/10" onClick={() => navigate("/admin")}>
               <Database className="mr-2 h-5 w-5" />
