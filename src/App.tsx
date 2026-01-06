@@ -9,6 +9,7 @@ import SystemOverview from "./pages/SystemOverview";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import BitcoinPuzzle from "./pages/BitcoinPuzzle";
+import OmniGenesis from "./pages/OmniGenesis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/bitcoin-puzzle" element={<BitcoinPuzzle />} />
+          <Route path="/omni-genesis" element={<OmniGenesis />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
